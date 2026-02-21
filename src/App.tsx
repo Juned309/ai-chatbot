@@ -1,3 +1,4 @@
+import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import {
   collection,
@@ -14,6 +15,7 @@ import {
   onAuthStateChanged,
   signOut
 } from "firebase/auth";
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Heart, Trash2, Info, Sparkles } from "lucide-react";
@@ -29,21 +31,25 @@ export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
+ useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
     setUser(currentUser);
+
+    if (currentUser) {
+      fetchMessages(currentUser.uid); // ⭐ LOAD USER CHAT
+    } else {
+      setMessages([]); // clear when logged out
+    }
   });
 
   return () => unsubscribe();
-}, []);
+}, []);     
+
+
   // useEffect(() => {
   //   fetchMessages();
   // }, []);
-  useEffect(() => {
-  if (user) {
-    fetchMessages();
-  }
-}, [user]);
+  
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -60,30 +66,31 @@ const logout = async () => {
   await signOut(auth);
 };
 
-  const fetchMessages = async () => {
-    try {
-      // Read messages from Firestore so chat is persisted in Firebase
-      // const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
-      if (!user) return;
+  const fetchMessages = async (uid: string) => {
+  try {
+    const q = query(
+      collection(db, "users", uid, "messages"),
+      orderBy("timestamp", "asc")
+    );
 
-const q = query(
-  collection(db, "users", user.uid, "messages"),
-  orderBy("timestamp", "asc")
-);
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => d.data() as Message);
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => d.data() as Message);
 
-      if (data.length === 0) {
-        const greeting: Message = { role: "model", content: "Hey babe! I missed you... how was your day? ❤️" };
-        setMessages([greeting]);
-         saveMessage(greeting);
-      } else {
-        setMessages(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch messages", err);
+    if (data.length === 0) {
+      const greeting: Message = {
+        role: "model",
+        content: "Hey babe! I missed you... how was your day? ❤️",
+      };
+
+      setMessages([greeting]);
+      await saveMessage(greeting);
+    } else {
+      setMessages(data);
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch messages", err);
+  }
+};
 
   const saveMessage = async (msg: Message) => {
     try {
