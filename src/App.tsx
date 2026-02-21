@@ -165,7 +165,7 @@ const q = query(
 }
 
   return (
-    <div className="relative min-h-screen flex flex-col max-w-2xl mx-auto">
+    <div className="relative h-dvh flex flex-col max-w-2xl mx-auto">
       <div className="atmosphere" />
       
       {/* Header */}
@@ -214,7 +214,7 @@ const q = query(
       {/* Chat Area */}
       <main
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-2 scroll-smooth pb-28"
+        className="flex-1 overflow-y-auto p-6 space-y-2 scroll-smooth min-h-0"
       >
         <div className="flex flex-col min-h-full justify-end">
           <AnimatePresence initial={false}>
@@ -253,9 +253,7 @@ const q = query(
 
       {/* Input Area */}
       {/* <ChatInput onSend={handleSend} isLoading={isLoading} /> */}
-      <div className="sticky bottom-0 bg-[#0a0502]">
-  <ChatInput onSend={handleSend} isLoading={isLoading} />
-</div>
+      <ChatInput onSend={handleSend} isLoading={isLoading} />
 
       {/* Decorative elements */}
       <div className="fixed top-20 left-10 opacity-20 pointer-events-none">
