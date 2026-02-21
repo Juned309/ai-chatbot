@@ -165,7 +165,7 @@ const q = query(
 }
 
   return (
-    <div className="relative h-screen flex flex-col max-w-2xl mx-auto overflow-hidden">
+    <div className="relative min-h-screen flex flex-col max-w-2xl mx-auto">
       <div className="atmosphere" />
       
       {/* Header */}
@@ -252,7 +252,10 @@ const q = query(
       </main>
 
       {/* Input Area */}
-      <ChatInput onSend={handleSend} isLoading={isLoading} />
+      {/* <ChatInput onSend={handleSend} isLoading={isLoading} /> */}
+      <div className="sticky bottom-0 bg-[#0a0502]">
+  <ChatInput onSend={handleSend} isLoading={isLoading} />
+</div>
 
       {/* Decorative elements */}
       <div className="fixed top-20 left-10 opacity-20 pointer-events-none">
