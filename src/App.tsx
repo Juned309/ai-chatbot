@@ -212,9 +212,9 @@ const q = query(
       </header>
 
       {/* Chat Area */}
-      <main 
+      <main
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-2 scroll-smooth"
+        className="flex-1 overflow-y-auto p-6 space-y-2 scroll-smooth pb-28"
       >
         <div className="flex flex-col min-h-full justify-end">
           <AnimatePresence initial={false}>
