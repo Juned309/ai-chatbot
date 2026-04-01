@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,31 +6,14 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("chat.db");
-
-// Initialize database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    role TEXT NOT NULL,
-    content TEXT NOT NULL,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS user_profile (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
-`);
-
-async function startServer() {
+export function createApp(database: Database.Database) {
   const app = express();
-  const PORT = 3000;
 
   app.use(express.json());
 
   // API Routes
-  app.get("/api/messages", (req, res) => {
-    const messages = db.prepare("SELECT role, content FROM messages ORDER BY timestamp ASC").all();
+  app.get("/api/messages", (_req, res) => {
+    const messages = database.prepare("SELECT role, content FROM messages ORDER BY timestamp ASC").all();
     res.json(messages);
   });
 
@@ -40,12 +22,12 @@ async function startServer() {
     if (!role || !content) {
       return res.status(400).json({ error: "Role and content are required" });
     }
-    db.prepare("INSERT INTO messages (role, content) VALUES (?, ?)").run(role, content);
+    database.prepare("INSERT INTO messages (role, content) VALUES (?, ?)").run(role, content);
     res.json({ success: true });
   });
 
-  app.get("/api/profile", (req, res) => {
-    const profile = db.prepare("SELECT key, value FROM user_profile").all();
+  app.get("/api/profile", (_req, res) => {
+    const profile = database.prepare("SELECT key, value FROM user_profile").all();
     const profileObj = profile.reduce((acc: any, curr: any) => {
       acc[curr.key] = curr.value;
       return acc;
@@ -55,14 +37,38 @@ async function startServer() {
 
   app.post("/api/profile", (req, res) => {
     const { key, value } = req.body;
-    db.prepare("INSERT OR REPLACE INTO user_profile (key, value) VALUES (?, ?)").run(key, value);
+    database.prepare("INSERT OR REPLACE INTO user_profile (key, value) VALUES (?, ?)").run(key, value);
     res.json({ success: true });
   });
 
-  app.post("/api/clear", (req, res) => {
-    db.prepare("DELETE FROM messages").run();
+  app.post("/api/clear", (_req, res) => {
+    database.prepare("DELETE FROM messages").run();
     res.json({ success: true });
   });
+
+  return app;
+}
+
+async function startServer() {
+  const { createServer: createViteServer } = await import("vite");
+
+  const db = new Database("chat.db");
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS user_profile (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+  `);
+
+  const app = createApp(db);
+  const PORT = 3000;
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
@@ -73,7 +79,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(__dirname, "dist")));
-    app.get("*", (req, res) => {
+    app.get("*", (_req, res) => {
       res.sendFile(path.join(__dirname, "dist", "index.html"));
     });
   }
@@ -83,4 +89,7 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only auto-start when run directly (not imported for tests)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startServer();
+}
