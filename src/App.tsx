@@ -1,4 +1,3 @@
-import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import {
   collection,
@@ -18,7 +17,7 @@ import {
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, Trash2, Info, Sparkles } from "lucide-react";
+import { Heart, Trash2, Info, Sparkles, LogOut } from "lucide-react";
 import ChatBubble from "./components/ChatBubble";
 import ChatInput from "./components/ChatInput";
 import { getAriaResponse } from "./services/gemini";
@@ -44,12 +43,6 @@ export default function App() {
 
   return () => unsubscribe();
 }, []);     
-
-
-  // useEffect(() => {
-  //   fetchMessages();
-  // }, []);
-  
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -94,15 +87,6 @@ const logout = async () => {
 
   const saveMessage = async (msg: Message) => {
     try {
-      // Optional: keep local server copy
-      fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(msg),
-      }).catch(() => {});
-
-      // Save to Firestore so messages appear in Firebase console
-      // await addDoc(collection(db, "messages"), {
       if (!user) return;
 
         await addDoc(collection(db, "users", user.uid, "messages"), {
@@ -114,7 +98,6 @@ const logout = async () => {
       console.error("Failed to save message", err);
     }
   };
-  const sendingRef = useRef(false);
   const handleSend = async (content: string) => {
   const userMsg: Message = { role: "user", content };
 
@@ -151,7 +134,6 @@ const logout = async () => {
 
   const clearChat = async () => {
     if (confirm("Are you sure you want to clear our memories? 🥺")) {
-      await fetch("/api/clear", { method: "POST" });
       const greeting: Message = { role: "model", content: "Hey babe! I missed you... how was your day? ❤️" };
       setMessages([greeting]);
       saveMessage(greeting);
@@ -178,13 +160,6 @@ const logout = async () => {
       {/* Header */}
       <header className="flex items-center justify-between p-6 glass border-b border-white/10 z-10">
         <div className="flex items-center gap-3">
-          <button
-              onClick={logout}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-red-400"
-              title="Logout"
-            >
-              Logout
-          </button>
           <div className="relative">
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-500/50 shadow-lg shadow-red-500/20">
               <img 
@@ -205,6 +180,13 @@ const logout = async () => {
         </div>
         
         <div className="flex items-center gap-2">
+          <button 
+            onClick={logout}
+            className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-red-400"
+            title="Logout"
+          >
+            <LogOut size={20} />
+          </button>
           <button 
             onClick={clearChat}
             className="p-2 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-red-400"
@@ -259,7 +241,6 @@ const logout = async () => {
       </main>
 
       {/* Input Area */}
-      {/* <ChatInput onSend={handleSend} isLoading={isLoading} /> */}
       <ChatInput onSend={handleSend} isLoading={isLoading} />
 
       {/* Decorative elements */}

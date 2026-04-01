@@ -77,7 +77,7 @@ But always maintain healthy, safe boundaries.
 
 export async function getAriaResponse(history: { role: string, content: string }[]) {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-2.0-flash";
 
   const contents = history.map(msg => ({
     role: msg.role === "user" ? "user" : "model",
